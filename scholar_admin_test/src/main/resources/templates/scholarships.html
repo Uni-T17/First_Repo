@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scholarship Management</title>
+    <!-- Link to external CSS file -->
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <style>
+        @charset "UTF-8";
+
+/* General Page Styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f9;
+    margin: 0;
+    padding: 20px;
+}
+
+h1, h2 {
+    color: #2e3b55;
+}
+
+/* Add Button Styling */
+.add-btn {
+    display: inline-block;
+    background-color: #003366;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.add-btn:hover {
+    background-color: #005599;
+}
+
+/* Modal Overlay Styling */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Black with transparency */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 50%;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Close button inside modal */
+.close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-btn:hover, .close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Form Styling */
+label {
+    font-weight: bold;
+    color: #2e3b55;
+}
+
+input, button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #003366;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #005599;
+}
+
+/* Scholarship Table Styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+}
+
+th {
+    background-color: #cdd8f0;
+    color: #2e3b55;
+}
+
+td {
+    border-bottom: 1px solid #ddd;
+}
+
+td:last-child {
+    text-align: center;
+}
+
+/* Delete button inside table */
+.delete-btn {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.delete-btn img {
+    width: 24px;
+}
+
+    </style>
+</head>
+
+<body>
+
+    <h1>Scholarship Management</h1>
+
+    <!-- Add Button -->
+    <a href="#" class="add-btn" id="openModal">+ Add</a>
+
+    <!-- Modal for Adding New Scholarship -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModal">&times;</span>
+            <h2>Scholarship Information</h2>
+            <form id="addScholarshipForm">
+                <label for="scholar_name">Scholarship Name:</label>
+                <input type="text" id="scholar_name" required>
+
+                <label for="fund_amount">Fund Amount:</label>
+                <input type="number" id="fund_amount" required>
+
+                <label for="given_number">Given Number:</label>
+                <input type="number" id="given_number" required>
+
+                <label for="sponsor">Sponsor:</label>
+                <input type="text" id="sponsor" required>
+
+                <label for="scholar_start_date">Start Date:</label>
+                <input type="date" id="scholar_start_date" required>
+
+                <label for="scholar_end_date">End Date:</label>
+                <input type="date" id="scholar_end_date" required>
+
+                <button type="submit">Add Scholarship</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- List of Scholarships -->
+    <h2>Types Of Scholarship</h2>
+    <table id="scholarshipTable">
+        <thead>
+            <tr>
+                <th>Scholarship Name</th>
+                <th>Fund Amount</th>
+                <th>Given Number</th>
+                <th>Sponsor</th>
+                <th>Period</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="scholarshipList">
+            <!-- Dynamically populated with JavaScript -->
+        </tbody>
+    </table>
+
+    <!-- Scripts -->
+    <script th:src="@{/js/scholarship.js}"></script>
+    <script>
+        const apiUrl = 'http://localhost:8080/api/adminScholar/adminScholarInfo';
+
+        // Modal functionality
+        const modal = document.getElementById("myModal");
+        const openModalBtn = document.getElementById("openModal");
+        const closeModalBtn = document.getElementById("closeModal");
+
+        openModalBtn.onclick = function () {
+            modal.style.display = "flex";
+        }
+
+        closeModalBtn.onclick = function () {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // Fetch all scholarships
+        function fetchScholarships() {
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const scholarshipList = document.getElementById('scholarshipList');
+                    scholarshipList.innerHTML = '';
+                    data.forEach(scholar => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${scholar.scholar_name}</td>
+                            <td>${scholar.fund_amount} Baht</td>
+                            <td>${scholar.given_number}</td>
+                            <td>${scholar.sponsor}</td>
+                            <td>${scholar.scholar_start_date} to ${scholar.scholar_end_date}</td>
+                            <td><button class="delete-btn" onclick="deleteScholar(${scholar.id})"><img src="delete-icon.png" alt="Delete"></button></td>
+                        `;
+                        scholarshipList.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching scholarships:', error));
+        }
+
+        // Add a new scholarship
+        document.getElementById('addScholarshipForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const scholarInfo = {
+                scholar_name: document.getElementById('scholar_name').value,
+                fund_amount: parseInt(document.getElementById('fund_amount').value),
+                given_number: parseInt(document.getElementById('given_number').value),
+                sponsor: document.getElementById('sponsor').value,
+                scholar_start_date: document.getElementById('scholar_start_date').value,
+                scholar_end_date: document.getElementById('scholar_end_date').value
+            };
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(scholarInfo)
+            })
+                .then(response => {
+                    if (response.status === 201) {
+                        alert('Scholarship added successfully');
+                        fetchScholarships(); // Refresh the scholarship list
+                        modal.style.display = "none"; // Close the modal
+                    } else {
+                        alert('Failed to add scholarship');
+                    }
+                })
+                .catch(error => console.error('Error adding scholarship:', error));
+        });
+
+        // Delete a scholarship
+        function deleteScholar(scholarId) {
+            fetch(`${apiUrl}/${scholarId}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (response.status === 200) {
+                        alert('Scholarship deleted successfully');
+                        fetchScholarships(); // Refresh the scholarship list
+                    } else {
+                        alert('Failed to delete scholarship');
+                    }
+                })
+                .catch(error => console.error('Error deleting scholarship:', error));
+        }
+
+        // Fetch scholarships on page load
+        window.onload = fetchScholarships;
+    </script>
+</body>
+
+</html>
